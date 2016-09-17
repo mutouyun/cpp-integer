@@ -26,3 +26,6 @@
 *.exe
 *.out
 *.app
+/build/.vs
+/build/bin
+/build/tmp

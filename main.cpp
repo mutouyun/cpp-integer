@@ -65,5 +65,6 @@ int main(void)
         a = std::move(b);
         b = std::move(c);
     }
+
     return 0;
 }
