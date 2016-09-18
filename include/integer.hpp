@@ -13,7 +13,6 @@
 #include <algorithm> // std::min
 #include <iostream>  // std::ostream, std::istream
 #include <iomanip>   // std::setw
-#include <cmath>     // std::power
 #include <cassert>   // assert
 #include <cstdint>   // uint32_t, ...
 
@@ -419,28 +418,28 @@ public:
             static const auto gain_unit = [](uint64_t x)
             {
                 uint64_t a = x / 10;
-                return static_cast<uint32_t>(x - a * 10);
+                return static_cast<uint8_t>(x - a * 10);
             };
             integer tmp = me;
-            std::vector<uint32_t> r_digits;
+            std::vector<uint8_t> r_digits;
             while (integer::compare(tmp, 0))
             {
-                std::vector<uint32_t> digits(tmp.values_.size());
+                std::vector<uint8_t> digits(tmp.values_.size());
                 int i = tmp.values_.size() - 1;
                 for (auto it = tmp.values_.rbegin(); it != tmp.values_.rend(); ++it, --i)
                 {
                     digits[i] = gain_unit(*it);
                 }
-                uint32_t r = 0;
-                for (unsigned k = 0; k < digits.size(); ++k)
+                uint8_t r = 0;
+                for (size_t k = 0; k < digits.size(); ++k)
                 {
-                    r += digits[k] * static_cast<uint32_t>(std::pow(6, k));
+                    r = gain_unit(r + digits[k] * ((k == 0) ? 1 : 6) /*gain_unit(6 ^ n) == = 6*/ );
                 }
                 r_digits.push_back(gain_unit(r));
                 tmp.unsign_div(10, nullptr);
             }
             for (auto it = r_digits.rbegin(); it != r_digits.rend(); ++it)
-                s << (*it);
+                s << static_cast<unsigned>(*it);
         }
         return s;
     }

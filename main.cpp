@@ -57,7 +57,7 @@ int main(void)
 
     std::cout << "Fibonacci Sequence:" << std::endl;
     integer a, b = 1;
-    for (int i = 0; i < 500; ++i)
+    for (int i = 0; i < 1000; ++i)
     {
         std::cout << a << std::endl;
         integer c = a + b;
