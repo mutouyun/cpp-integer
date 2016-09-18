@@ -444,4 +444,35 @@ public:
         }
         return s;
     }
+
+    friend bool operator!=(const integer& x, const integer& y) { return !(x == y); }
+    friend bool operator> (const integer& x, const integer& y) { return  (y < x); }
+    friend bool operator<=(const integer& x, const integer& y) { return !(x > y); }
+    friend bool operator>=(const integer& x, const integer& y) { return !(x < y); }
+
+    friend integer& operator++(integer& x)      { return x += 1; }
+    friend integer  operator++(integer& x, int) { integer nrv(x); ++x; return std::move(nrv); }
+    friend integer& operator--(integer& x)      { return x -= 1; }
+    friend integer  operator--(integer& x, int) { integer nrv(x); --x; return std::move(nrv); }
+
+    friend integer operator+(const integer & x, const integer & y) { return std::move(integer(x) += y); }
+    friend integer operator+(      integer&& x,       integer&& y) { return std::move(        x  += y); }
+    friend integer operator+(      integer&& x, const integer & y) { return std::move(        x  += y); }
+    friend integer operator+(const integer & x,       integer&& y) { return std::move(        y  += x); }
+    friend integer operator-(const integer & x, const integer & y) { return std::move(integer(x) -= y); }
+    friend integer operator-(      integer&& x,       integer&& y) { return std::move(        x  -= y); }
+    friend integer operator-(      integer&& x, const integer & y) { return std::move(        x  -= y); }
+    friend integer operator-(const integer & x,       integer&& y) { return std::move(        y  -= x); }
+    friend integer operator*(const integer & x, const integer & y) { return std::move(integer(x) *= y); }
+    friend integer operator*(      integer&& x,       integer&& y) { return std::move(        x  *= y); }
+    friend integer operator*(      integer&& x, const integer & y) { return std::move(        x  *= y); }
+    friend integer operator*(const integer & x,       integer&& y) { return std::move(        y  *= x); }
+    friend integer operator/(const integer & x, const integer & y) { return std::move(integer(x) /= y); }
+    friend integer operator/(      integer&& x,       integer&& y) { return std::move(        x  /= y); }
+    friend integer operator/(      integer&& x, const integer & y) { return std::move(        x  /= y); }
+    friend integer operator/(const integer & x,       integer&& y) { return std::move(        y  /= x); }
+    friend integer operator%(const integer & x, const integer & y) { return std::move(integer(x) %= y); }
+    friend integer operator%(      integer&& x,       integer&& y) { return std::move(        x  %= y); }
+    friend integer operator%(      integer&& x, const integer & y) { return std::move(        x  %= y); }
+    friend integer operator%(const integer & x,       integer&& y) { return std::move(        y  %= x); }
 };

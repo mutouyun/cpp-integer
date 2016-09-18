@@ -60,8 +60,7 @@ int main(void)
     for (int i = 0; i < 500; ++i)
     {
         std::cout << a << std::endl;
-        integer c = a;
-        c += b;
+        integer c = a + b;
         a = std::move(b);
         b = std::move(c);
     }
