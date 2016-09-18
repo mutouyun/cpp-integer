@@ -190,11 +190,11 @@ private:
         int cmp = unsign_compare(dd, ds);
         if (cmp == 0)
         {
-            return { 1, 0 };
+            return std::tuple<uint64_t, integer>(1, 0);
         }
         else if (cmp < 0)
         {
-            return { 0, std::move(dd) };
+            return std::tuple<uint64_t, integer>(0, std::move(dd));
         }
         else // dd.size() == ds.size()
         {
@@ -238,7 +238,7 @@ private:
                 else break;
                 last_cmp = cmp;
             }
-            return { qu_64, std::move(re) };
+            return std::tuple<uint64_t, integer>(qu_64, std::move(re));
         }
     }
 
