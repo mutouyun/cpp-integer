@@ -50,18 +50,23 @@ public:
         : integer(static_cast<uint64_t>(n < 0 ? (minus_ = true, -n) : n))
     {}
 
-    operator uint32_t(void) const
+    explicit operator uint32_t(void) const
     {
         if (values_.empty()) return 0;
         return static_cast<uint32_t>(values_[0]);
     }
 
-    operator uint64_t(void) const
+    explicit operator uint64_t(void) const
     {
         if (values_.empty()) return 0;
         if (values_.size() == 1) return static_cast<uint64_t>(values_[0]);
         uint64_t ret = values_[1];
         return ((ret <<= 32) |= values_[0]);
+    }
+
+    operator bool(void) const
+    {
+        return !(values_.empty());
     }
 
     size_t size(void) const
@@ -347,6 +352,29 @@ public:
         return (*this);
     }
 
+    integer& operator&=(const integer& y)
+    {
+        for (size_t i = 0; i < this->size(); ++i)
+        {
+            if (i >= y.size())
+                this->values_[i] = 0;
+            else
+                this->values_[i] &= y.values_[i];
+        }
+        clean_up();
+        return (*this);
+    }
+
+    integer& operator|=(const integer& y)
+    {
+        size_t s = std::min(this->size(), y.size());
+        for (size_t i = 0; i < s; ++i)
+        {
+            this->values_[i] |= y.values_[i];
+        }
+        return (*this);
+    }
+
     integer& operator+=(const integer& y)
     {
         if (this->minus_ == y.minus_)
@@ -474,4 +502,12 @@ public:
     friend integer operator%(      integer&& x,       integer&& y) { return std::move(        x  %= y); }
     friend integer operator%(      integer&& x, const integer & y) { return std::move(        x  %= y); }
     friend integer operator%(const integer & x,       integer&& y) { return std::move(        y  %= x); }
+    friend integer operator&(const integer & x, const integer & y) { return std::move(integer(x) &= y); }
+    friend integer operator&(      integer&& x,       integer&& y) { return std::move(        x  &= y); }
+    friend integer operator&(      integer&& x, const integer & y) { return std::move(        x  &= y); }
+    friend integer operator&(const integer & x,       integer&& y) { return std::move(        y  &= x); }
+    friend integer operator|(const integer & x, const integer & y) { return std::move(integer(x) |= y); }
+    friend integer operator|(      integer&& x,       integer&& y) { return std::move(        x  |= y); }
+    friend integer operator|(      integer&& x, const integer & y) { return std::move(        x  |= y); }
+    friend integer operator|(const integer & x,       integer&& y) { return std::move(        y  |= x); }
 };
