@@ -47,8 +47,11 @@ void test_div(void)
     std::cout << std::dec;
 }
 
+#include <cmath>
+
 int main(void)
 {
+/*
     test_shift();
     test_sub();
     test_mul();
@@ -57,13 +60,41 @@ int main(void)
 
     std::cout << "Fibonacci Sequence:" << std::endl;
     integer a, b = 1;
-    for (int i = 0; i < 500; ++i)
+    for (int i = 0; i < 1000; ++i)
     {
         std::cout << a << std::endl;
-        integer c = a;
-        c += b;
+        integer c = a + b;
         a = std::move(b);
         b = std::move(c);
+    }
+*/
+    auto is_prime = [](const auto& n)
+    {
+        using n_t = decltype(n);
+        if (n == n_t(2)) return true;
+        if (n & n_t(1))
+        {
+            auto s = static_cast<size_t>(std::sqrt(static_cast<size_t>(n)));
+            for (size_t i = 3; i <= s; ++i)
+            {
+                if (i & 1)
+                {
+                    if (n % n_t(i)) continue;
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    };
+
+    for (integer k = 2, c = 1; k < integer(100); ++k)
+    {
+        if (is_prime(k))
+        {
+            std::cout << c << " " << k << std::endl;
+            c += 1;
+        }
     }
 
     return 0;

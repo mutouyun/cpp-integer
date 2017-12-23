@@ -13,7 +13,6 @@
 #include <algorithm> // std::min
 #include <iostream>  // std::ostream, std::istream
 #include <iomanip>   // std::setw
-#include <cmath>     // std::power
 #include <cassert>   // assert
 #include <cstdint>   // uint32_t, ...
 
@@ -51,18 +50,23 @@ public:
         : integer(static_cast<uint64_t>(n < 0 ? (minus_ = true, -n) : n))
     {}
 
-    operator uint32_t(void) const
+    explicit operator uint32_t(void) const
     {
         if (values_.empty()) return 0;
         return static_cast<uint32_t>(values_[0]);
     }
 
-    operator uint64_t(void) const
+    explicit operator uint64_t(void) const
     {
         if (values_.empty()) return 0;
         if (values_.size() == 1) return static_cast<uint64_t>(values_[0]);
         uint64_t ret = values_[1];
         return ((ret <<= 32) |= values_[0]);
+    }
+
+    operator bool(void) const
+    {
+        return !(values_.empty());
     }
 
     size_t size(void) const
@@ -190,11 +194,11 @@ private:
         int cmp = unsign_compare(dd, ds);
         if (cmp == 0)
         {
-            return { 1, 0 };
+            return std::tuple<uint64_t, integer>(1, 0);
         }
         else if (cmp < 0)
         {
-            return { 0, std::move(dd) };
+            return std::tuple<uint64_t, integer>(0, std::move(dd));
         }
         else // dd.size() == ds.size()
         {
@@ -238,7 +242,7 @@ private:
                 else break;
                 last_cmp = cmp;
             }
-            return { qu_64, std::move(re) };
+            return std::tuple<uint64_t, integer>(qu_64, std::move(re));
         }
     }
 
@@ -348,6 +352,29 @@ public:
         return (*this);
     }
 
+    integer& operator&=(const integer& y)
+    {
+        for (size_t i = 0; i < this->size(); ++i)
+        {
+            if (i >= y.size())
+                this->values_[i] = 0;
+            else
+                this->values_[i] &= y.values_[i];
+        }
+        clean_up();
+        return (*this);
+    }
+
+    integer& operator|=(const integer& y)
+    {
+        size_t s = std::min(this->size(), y.size());
+        for (size_t i = 0; i < s; ++i)
+        {
+            this->values_[i] |= y.values_[i];
+        }
+        return (*this);
+    }
+
     integer& operator+=(const integer& y)
     {
         if (this->minus_ == y.minus_)
@@ -419,29 +446,68 @@ public:
             static const auto gain_unit = [](uint64_t x)
             {
                 uint64_t a = x / 10;
-                return static_cast<uint32_t>(x - a * 10);
+                return static_cast<uint8_t>(x - a * 10);
             };
             integer tmp = me;
-            std::vector<uint32_t> r_digits;
+            std::vector<uint8_t> r_digits;
             while (integer::compare(tmp, 0))
             {
-                std::vector<uint32_t> digits(tmp.values_.size());
+                std::vector<uint8_t> digits(tmp.values_.size());
                 int i = tmp.values_.size() - 1;
                 for (auto it = tmp.values_.rbegin(); it != tmp.values_.rend(); ++it, --i)
                 {
                     digits[i] = gain_unit(*it);
                 }
-                uint32_t r = 0;
-                for (unsigned k = 0; k < digits.size(); ++k)
+                uint8_t r = 0;
+                for (size_t k = 0; k < digits.size(); ++k)
                 {
-                    r += digits[k] * static_cast<uint32_t>(std::pow(6, k));
+                    r = gain_unit(r + digits[k] * ((k == 0) ? 1 : 6) /*gain_unit(6 ^ n) == = 6*/ );
                 }
                 r_digits.push_back(gain_unit(r));
                 tmp.unsign_div(10, nullptr);
             }
             for (auto it = r_digits.rbegin(); it != r_digits.rend(); ++it)
-                s << (*it);
+                s << static_cast<unsigned>(*it);
         }
         return s;
     }
+
+    friend bool operator!=(const integer& x, const integer& y) { return !(x == y); }
+    friend bool operator> (const integer& x, const integer& y) { return  (y < x); }
+    friend bool operator<=(const integer& x, const integer& y) { return !(x > y); }
+    friend bool operator>=(const integer& x, const integer& y) { return !(x < y); }
+
+    friend integer& operator++(integer& x)      { return x += 1; }
+    friend integer  operator++(integer& x, int) { integer nrv(x); ++x; return std::move(nrv); }
+    friend integer& operator--(integer& x)      { return x -= 1; }
+    friend integer  operator--(integer& x, int) { integer nrv(x); --x; return std::move(nrv); }
+
+    friend integer operator+(const integer & x, const integer & y) { return std::move(integer(x) += y); }
+    friend integer operator+(      integer&& x,       integer&& y) { return std::move(        x  += y); }
+    friend integer operator+(      integer&& x, const integer & y) { return std::move(        x  += y); }
+    friend integer operator+(const integer & x,       integer&& y) { return std::move(        y  += x); }
+    friend integer operator-(const integer & x, const integer & y) { return std::move(integer(x) -= y); }
+    friend integer operator-(      integer&& x,       integer&& y) { return std::move(        x  -= y); }
+    friend integer operator-(      integer&& x, const integer & y) { return std::move(        x  -= y); }
+    friend integer operator-(const integer & x,       integer&& y) { return std::move(        y  -= x); }
+    friend integer operator*(const integer & x, const integer & y) { return std::move(integer(x) *= y); }
+    friend integer operator*(      integer&& x,       integer&& y) { return std::move(        x  *= y); }
+    friend integer operator*(      integer&& x, const integer & y) { return std::move(        x  *= y); }
+    friend integer operator*(const integer & x,       integer&& y) { return std::move(        y  *= x); }
+    friend integer operator/(const integer & x, const integer & y) { return std::move(integer(x) /= y); }
+    friend integer operator/(      integer&& x,       integer&& y) { return std::move(        x  /= y); }
+    friend integer operator/(      integer&& x, const integer & y) { return std::move(        x  /= y); }
+    friend integer operator/(const integer & x,       integer&& y) { return std::move(        y  /= x); }
+    friend integer operator%(const integer & x, const integer & y) { return std::move(integer(x) %= y); }
+    friend integer operator%(      integer&& x,       integer&& y) { return std::move(        x  %= y); }
+    friend integer operator%(      integer&& x, const integer & y) { return std::move(        x  %= y); }
+    friend integer operator%(const integer & x,       integer&& y) { return std::move(        y  %= x); }
+    friend integer operator&(const integer & x, const integer & y) { return std::move(integer(x) &= y); }
+    friend integer operator&(      integer&& x,       integer&& y) { return std::move(        x  &= y); }
+    friend integer operator&(      integer&& x, const integer & y) { return std::move(        x  &= y); }
+    friend integer operator&(const integer & x,       integer&& y) { return std::move(        y  &= x); }
+    friend integer operator|(const integer & x, const integer & y) { return std::move(integer(x) |= y); }
+    friend integer operator|(      integer&& x,       integer&& y) { return std::move(        x  |= y); }
+    friend integer operator|(      integer&& x, const integer & y) { return std::move(        x  |= y); }
+    friend integer operator|(const integer & x,       integer&& y) { return std::move(        y  |= x); }
 };
